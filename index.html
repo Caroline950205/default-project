@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 樂團小動物消消樂 - Musical Animal Match-3</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #4a5568;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: #718096;
+        }
+
+        .mascot-banner {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-size: 1.5rem;
+            background: #edf2f7;
+            padding: 8px 16px;
+            border-radius: 30px;
+        }
+
+        .stats-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 16px;
+            background: #f7fafc;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #2d3748;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            color: #2b6cb0;
+            font-weight: bold;
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 16px;
+            background: #edf2f7;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+
+        .audio-controls label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .audio-controls input[type="range"] {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            background: #cbd5e0;
+            padding: 10px;
+            border-radius: 12px;
+            touch-action: none;
+            margin-bottom: 16px;
+        }
+
+        .cell {
+            width: 48px;
+            height: 48px;
+            background: #fff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.7rem;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.15s ease, background-color 0.15s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .cell:hover {
+            transform: scale(1.05);
+            background: #ebf8ff;
+        }
+
+        .cell.selected {
+            background: #bee3f8;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(66, 153, 225, 0.6);
+            border: 2px solid #3182ce;
+        }
+
+        .cell.matched {
+            animation: pop 0.3s ease forwards;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; background: #feebcb; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .btn {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 4px 6px rgba(66, 153, 225, 0.3);
+        }
+
+        .btn:hover {
+            background: #3182ce;
+        }
+
+        .game-over-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .game-over-modal.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-width: 320px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 12px;
+            color: #2d3748;
+        }
+
+        .modal-content p {
+            margin-bottom: 20px;
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 480px) {
+            .cell {
+                width: 40px;
+                height: 40px;
+                font-size: 1.4rem;
+            }
+            .game-container {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <header>
+            <h1>🎵 樂團小動物消消樂</h1>
+            <div class="subtitle">配對音樂小動物與樂器，演奏完美旋律！</div>
+        </header>
+
+        <div class="mascot-banner">
+            <span>🐱指揮</span>
+            <span>🎻小提琴</span>
+            <span>🎹鋼琴</span>
+            <span>🎷薩克斯</span>
+            <span>🐰長笛</span>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-item">
+                剩餘步數
+                <span id="moves" class="stat-value">25</span>
+            </div>
+            <div class="stat-item">
+                目前得分
+                <span id="score" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                最高紀錄
+                <span id="highscore" class="stat-value">0</span>
+            </div>
+        </div>
+
+        <!-- Audio controls (Volume slider & Mute toggle) -->
+        <div class="audio-controls">
+            <label>
+                <input type="checkbox" id="soundToggle" checked> 音效
+            </label>
+            <span>音量</span>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5">
+        </div>
+
+        <div id="grid" class="grid"></div>
+
+        <button class="btn" id="restartBtn">重新開始遊戲</button>
+    </div>
+
+    <div class="game-over-modal" id="gameOverModal">
+        <div class="modal-content">
+            <h2>遊戲結束！🎉</h2>
+            <p id="finalScoreText">您的最終得分：0</p>
+            <button class="btn" id="modalRestartBtn">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio API Sound Synthesizer
+        let audioCtx = null;
+        let masterGain = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                masterGain = audioCtx.createGain();
+                masterGain.connect(audioCtx.destination);
+                updateVolume();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function updateVolume() {
+            if (!masterGain) return;
+            const volumeSlider = document.getElementById('volumeSlider');
+            const soundToggle = document.getElementById('soundToggle');
+            if (!soundToggle.checked) {
+                masterGain.gain.value = 0;
+            } else {
+                masterGain.gain.value = parseFloat(volumeSlider.value);
+            }
+        }
+
+        function playSound(freq, type = 'sine', duration = 0.15) {
+            const soundToggle = document.getElementById('soundToggle');
+            if (!soundToggle || !soundToggle.checked) return;
+            initAudio();
+            if (!audioCtx || !masterGain) return;
+
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(masterGain);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        const notesFrequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25];
+        function playMatchSound(count = 3) {
+            for (let i = 0; i < Math.min(count, 5); i++) {
+                setTimeout(() => {
+                    playSound(notesFrequencies[i % notesFrequencies.length], 'triangle', 0.2);
+                }, i * 80);
+            }
+        }
+
+        // Game configuration
+        const GRID_SIZE = 7;
+        const ITEMS = ['🎻', '🎹', '🎷', '🎺', '🎵', '🐱', '🐰'];
+        
+        let grid = [];
+        let score = 0;
+        let moves = 25;
+        let highScore = localStorage.getItem('musical_match3_highscore') || 0;
+        let selectedCell = null;
+        let isAnimating = false;
+
+        document.getElementById('highscore').textContent = highScore;
+
+        // Initialize Grid without initial matches
+        function initGame() {
+            score = 0;
+            moves = 25;
+            updateStats();
+            document.getElementById('gameOverModal').classList.remove('show');
+
+            do {
+                grid = [];
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    let row = [];
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        row.push(getRandomItem());
+                    }
+                    grid.push(row);
+                }
+            } while (findMatches().length > 0);
+
+            renderGrid();
+        }
+
+        function getRandomItem() {
+            return ITEMS[Math.floor(Math.random() * ITEMS.length)];
+        }
+
+        function renderGrid() {
+            const gridEl = document.getElementById('grid');
+            gridEl.innerHTML = '';
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.textContent = grid[r][c];
+
+                    if (selectedCell && selectedCell.row === r && selectedCell.col === c) {
+                        cell.classList.add('selected');
+                    }
+
+                    cell.addEventListener('click', () => handleCellClick(r, c));
+                    gridEl.appendChild(cell);
+                }
+            }
+        }
+
+        function handleCellClick(r, c) {
+            if (isAnimating || moves <= 0) return;
+            initAudio();
+            playSound(350, 'sine', 0.08);
+
+            if (!selectedCell) {
+                selectedCell = { row: r, col: c };
+                renderGrid();
+            } else {
+                const prevRow = selectedCell.row;
+                const prevCol = selectedCell.col;
+
+                if (prevRow === r && prevCol === c) {
+                    selectedCell = null;
+                    renderGrid();
+                    return;
+                }
+
+                // Check if adjacent
+                const isAdjacent = (Math.abs(prevRow - r) + Math.abs(prevCol - c)) === 1;
+                if (isAdjacent) {
+                    swapCells(prevRow, prevCol, r, c);
+                    selectedCell = null;
+                    
+                    // Check matches
+                    const matches = findMatches();
+                    if (matches.length > 0) {
+                        moves--;
+                        updateStats();
+                        processMatches(matches);
+                    } else {
+                        // Swap back if no match
+                        swapCells(prevRow, prevCol, r, c);
+                        renderGrid();
+                        playSound(180, 'sawtooth', 0.15);
+                    }
+                } else {
+                    selectedCell = { row: r, col: c };
+                    renderGrid();
+                }
+            }
+        }
+
+        function swapCells(r1, c1, r2, c2) {
+            const temp = grid[r1][c1];
+            grid[r1][c1] = grid[r2][c2];
+            grid[r2][c2] = temp;
+            renderGrid();
+        }
+
+        function findMatches() {
+            let matchedSet = new Set();
+
+            // Horizontal
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE - 2; c++) {
+                    let item = grid[r][c];
+                    if (item && item === grid[r][c+1] && item === grid[r][c+2]) {
+                        matchedSet.add(`${r},${c}`);
+                        matchedSet.add(`${r},${c+1}`);
+                        matchedSet.add(`${r},${c+2}`);
+                    }
+                }
+            }
+
+            // Vertical
+            for (let c = 0; c < GRID_SIZE; c++) {
+                for (let r = 0; r < GRID_SIZE - 2; r++) {
+                    let item = grid[r][c];
+                    if (item && item === grid[r+1][c] && item === grid[r+2][c]) {
+                        matchedSet.add(`${r},${c}`);
+                        matchedSet.add(`${r+1},${c}`);
+                        matchedSet.add(`${r+2},${c}`);
+                    }
+                }
+            }
+
+            return Array.from(matchedSet).map(s => {
+                const [r, c] = s.split(',').map(Number);
+                return { r, c };
+            });
+        }
+
+        async function processMatches(matches) {
+            isAnimating = true;
+
+            while (matches.length > 0) {
+                playMatchSound(matches.length);
+                score += matches.length * 10;
+                updateStats();
+
+                // Mark matched cells
+                const gridEl = document.getElementById('grid');
+                matches.forEach(m => {
+                    const index = m.r * GRID_SIZE + m.c;
+                    const cellEl = gridEl.children[index];
+                    if (cellEl) cellEl.classList.add('matched');
+                });
+
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // Clear matches & drop items down
+                matches.forEach(m => {
+                    grid[m.r][m.c] = null;
+                });
+
+                // Drop down
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    let writeRow = GRID_SIZE - 1;
+                    for (let r = GRID_SIZE - 1; r >= 0; r--) {
+                        if (grid[r][c] !== null) {
+                            grid[writeRow][c] = grid[r][c];
+                            if (writeRow !== r) {
+                                grid[r][c] = null;
+                            }
+                            writeRow--;
+                        }
+                    }
+                    // Fill empty top with new items
+                    for (let r = writeRow; r >= 0; r--) {
+                        grid[r][c] = getRandomItem();
+                    }
+                }
+
+                renderGrid();
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                matches = findMatches();
+            }
+
+            isAnimating = false;
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('musical_match3_highscore', highScore);
+                document.getElementById('highscore').textContent = highScore;
+            }
+
+            if (moves <= 0) {
+                document.getElementById('finalScoreText').textContent = `您的最終得分：${score}`;
+                document.getElementById('gameOverModal').classList.add('show');
+                playSound(220, 'sine', 0.5);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('moves').textContent = moves;
+        }
+
+        // Event listeners
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+        document.getElementById('modalRestartBtn').addEventListener('click', initGame);
+        document.getElementById('volumeSlider').addEventListener('input', updateVolume);
+        document.getElementById('soundToggle').addEventListener('change', updateVolume);
+
+        // Initial start
+        initGame();
+    </script>
+</body>
+</html>
