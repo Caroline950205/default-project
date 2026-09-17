@@ -99,30 +99,7 @@
             font-weight: bold;
         }
 
-        .audio-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            margin-bottom: 16px;
-            background: #edf2f7;
-            padding: 10px 16px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-        }
 
-        .audio-controls label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .audio-controls input[type="range"] {
-            flex: 1;
-            cursor: pointer;
-        }
 
         .grid {
             display: grid;
@@ -270,14 +247,7 @@
             </div>
         </div>
 
-        <!-- Audio controls (Volume slider & Mute toggle) -->
-        <div class="audio-controls">
-            <label>
-                <input type="checkbox" id="soundToggle" checked> 音效
-            </label>
-            <span>音量</span>
-            <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5">
-        </div>
+
 
         <div id="grid" class="grid"></div>
 
@@ -293,66 +263,7 @@
     </div>
 
     <script>
-        // Web Audio API Sound Synthesizer
-        let audioCtx = null;
-        let masterGain = null;
 
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                masterGain = audioCtx.createGain();
-                masterGain.connect(audioCtx.destination);
-                updateVolume();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        }
-
-        function updateVolume() {
-            if (!masterGain) return;
-            const volumeSlider = document.getElementById('volumeSlider');
-            const soundToggle = document.getElementById('soundToggle');
-            if (!soundToggle.checked) {
-                masterGain.gain.value = 0;
-            } else {
-                masterGain.gain.value = parseFloat(volumeSlider.value);
-            }
-        }
-
-        function playSound(freq, type = 'sine', duration = 0.15) {
-            const soundToggle = document.getElementById('soundToggle');
-            if (!soundToggle || !soundToggle.checked) return;
-            initAudio();
-            if (!audioCtx || !masterGain) return;
-
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-
-                osc.connect(gain);
-                gain.connect(masterGain);
-
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        const notesFrequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25];
-        function playMatchSound(count = 3) {
-            for (let i = 0; i < Math.min(count, 5); i++) {
-                setTimeout(() => {
-                    playSound(notesFrequencies[i % notesFrequencies.length], 'triangle', 0.2);
-                }, i * 80);
-            }
-        }
 
         // Game configuration
         const GRID_SIZE = 7;
@@ -416,8 +327,6 @@
 
         function handleCellClick(r, c) {
             if (isAnimating || moves <= 0) return;
-            initAudio();
-            playSound(350, 'sine', 0.08);
 
             if (!selectedCell) {
                 selectedCell = { row: r, col: c };
@@ -448,7 +357,6 @@
                         // Swap back if no match
                         swapCells(prevRow, prevCol, r, c);
                         renderGrid();
-                        playSound(180, 'sawtooth', 0.15);
                     }
                 } else {
                     selectedCell = { row: r, col: c };
@@ -501,7 +409,6 @@
             isAnimating = true;
 
             while (matches.length > 0) {
-                playMatchSound(matches.length);
                 score += matches.length * 10;
                 updateStats();
 
@@ -555,7 +462,6 @@
             if (moves <= 0) {
                 document.getElementById('finalScoreText').textContent = `您的最終得分：${score}`;
                 document.getElementById('gameOverModal').classList.add('show');
-                playSound(220, 'sine', 0.5);
             }
         }
 
@@ -567,8 +473,6 @@
         // Event listeners
         document.getElementById('restartBtn').addEventListener('click', initGame);
         document.getElementById('modalRestartBtn').addEventListener('click', initGame);
-        document.getElementById('volumeSlider').addEventListener('input', updateVolume);
-        document.getElementById('soundToggle').addEventListener('change', updateVolume);
 
         // Initial start
         initGame();
