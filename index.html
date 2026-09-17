@@ -53,13 +53,23 @@
 
         .mascot-banner {
             display: flex;
-            justify-content: center;
-            gap: 12px;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: space-around;
+            width: 100%;
             margin-bottom: 16px;
-            font-size: 1.5rem;
+            font-size: 0.9rem;
             background: #edf2f7;
-            padding: 8px 16px;
-            border-radius: 30px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            gap: 6px;
+        }
+
+        .mascot-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
         }
 
         .stats-panel {
@@ -238,11 +248,11 @@
         </header>
 
         <div class="mascot-banner">
-            <span>🐱指揮</span>
-            <span>🎻小提琴</span>
-            <span>🎹鋼琴</span>
-            <span>🎷薩克斯</span>
-            <span>🐰長笛</span>
+            <div class="mascot-item"><span>🐱</span><span>指揮</span></div>
+            <div class="mascot-item"><span>🎻</span><span>小提琴</span></div>
+            <div class="mascot-item"><span>🎹</span><span>鋼琴</span></div>
+            <div class="mascot-item"><span>🎷</span><span>薩克斯</span></div>
+            <div class="mascot-item"><span>🐰</span><span>長笛</span></div>
         </div>
 
         <div class="stats-panel">
